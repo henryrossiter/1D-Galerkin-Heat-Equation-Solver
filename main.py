@@ -97,6 +97,7 @@ fig, ax = plt.subplots()
 im = ax.imshow(U, aspect='auto')
 ax.set(xlabel='t', ylabel='x', title='Numerical Solution, dt=1/{}, dx=1/{}'.format(nt-1, nx-1))
 fig.colorbar(im)
+fig.savefig("heatmap.png")
 plt.show()
 
 # Plot of numerical and exact solutions at t=1
@@ -106,4 +107,5 @@ ax.plot(xx, exact[:,-1], label='Analytical Solution')
 ax.set(xlabel='x', ylabel='Heat', title='Solution at t=1. dt=1/{}, dx=1/{}'.format(nt-1, nx-1))
 ax.legend()
 ax.grid()
+fig.savefig("finalSolutionPlot.png")
 plt.show()
