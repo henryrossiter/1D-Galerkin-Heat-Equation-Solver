@@ -13,7 +13,7 @@ import sys
 time_discretization = 'forward'
 
 # Number of t-steps
-nt = 600
+nt = 552
 dt = 1/(nt-1)
 
 # Number of x-steps
@@ -94,7 +94,7 @@ for n in range(len(tt)):
 
 # Heatmap of numerical solution
 fig, ax = plt.subplots()
-im = ax.imshow(U, aspect='auto')
+im = ax.imshow(U, aspect='auto', extent=[0, 1, 0, 1])
 ax.set(xlabel='t', ylabel='x', title='Numerical Solution, dt=1/{}, dx=1/{}'.format(nt-1, nx-1))
 fig.colorbar(im)
 fig.savefig("heatmap.png")
