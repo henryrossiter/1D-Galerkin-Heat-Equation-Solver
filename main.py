@@ -1,4 +1,6 @@
-# Galerkin Finite Element Method for Non Homogenous Heat Equation
+# Non Homogenous Heat Equation Approximation
+# Uses Galerkin FEM for spacial discretization
+# Forward or Backward Euler for time discretization
 # Author: Henry Rossiter
 
 import numpy as np
@@ -8,11 +10,11 @@ import matplotlib.pyplot as plt
 import sys
 
 # 'forward' or 'backward' Euler time discretization
-time_discretization = 'backward'
+time_discretization = 'forward'
 
 # Number of t-steps
-nt = 512
-delt = 1/(nt-1)
+nt = 600
+dt = 1/(nt-1)
 
 # Number of x-steps
 nx = 11
@@ -33,14 +35,12 @@ def f(x, t):
 
 # Integral of f on [xi-h/2, xi+h/2]
 # Uses two point Gaussian Quadrature
-def quadrature(x, h, t):
+def evaluate_quadrature(x, h, t):
   a = x - h/2
   b = x + h/2
   x1 = -0.57735026918963
   x2 = 0.57735026918963
   return (f(((b-a)*x1+a+b)/2, t) + f(((b-a)*x2+a+b)/2, t))*(b-a)/2
-
-
 
 # Build mass matrix
 m = np.zeros((nx-2, nx-2))
@@ -49,7 +49,7 @@ for i in range(nx-2):
 for i in range(nx-3):
   m[i][i+1] = 1
   m[i+1][i] = 1
-M = delx/6*m
+M = m*delx/6
 
 # Build A matrix
 a = np.zeros((nx-2, nx-2))
@@ -58,12 +58,12 @@ for i in range(nx-2):
 for i in range(nx-3):
   a[i][i+1] = -1
   a[i+1][i] = -1
-A = 1/delx*a
+A = a*1/delx
 
 # Approximate F at each meshpoint
 for n in range(nt):
   for i in range(1, nx-1):
-    F[i,n] = quadrature(x[i], delx, t[n])
+    F[i,n] = evaluate_quadrature(x[i], delx, t[n])
 
 # Discard first vector of F
 F = F[1:,:]
@@ -72,11 +72,11 @@ F = F[1:,:]
 if time_discretization == 'forward':
   # Forward Euler time discretization
   for n in range(nt-1):
-    C[:,n+1] = np.linalg.solve(M, delt*F[:,n]-delt*np.matmul(A, C[:,n]))+C[:,n]
+    C[:,n+1] = np.linalg.solve(M, dt*F[:,n]-dt*np.matmul(A, C[:,n]))+C[:,n]
 elif time_discretization == 'backward':
   # Backward Euler time discretization
   for n in range(nt-1):
-    C[:,n+1] = np.linalg.solve(delt*M+A, F[:,n+1]+delt*np.matmul(M, C[:,n]))
+    C[:,n+1] = np.linalg.solve(dt*M+A, F[:,n+1]+dt*np.matmul(M, C[:,n]))
 else:
   print('Time discretization must be either `forward` or `backward`')
   sys.exit(0)
@@ -84,21 +84,22 @@ else:
 # Solution U is C with BC's enforced
 U[1:-1] = C
 
-#Calculate exact solution on mesh
+# Calculate exact solution on 1000x1000 mesh
 exact = np.zeros((1000,1000))
-xx = np.linspace(0,1,1000)
 tt = np.linspace(0,1,1000)
+xx = np.linspace(0,1,1000)
 for n in range(len(tt)):
   for i in range(len(xx)):
     exact[i,n] = exp(-tt[n])*sin(pi*xx[i])
 
-# fig, ax = plt.subplots()
-# im = ax.imshow(U, aspect='auto')
-# fig.tight_layout()
-# ax.set(xlabel='t', ylabel='x', title='Numerical Solution, dt={}, dx={}'.format(delt, delx))
-# fig.colorbar(im)
-# plt.show()
+# Heatmap of numerical solution
+fig, ax = plt.subplots()
+im = ax.imshow(U, aspect='auto')
+ax.set(xlabel='t', ylabel='x', title='Numerical Solution, dt=1/{}, dx=1/{}'.format(nt-1, nx-1))
+fig.colorbar(im)
+plt.show()
 
+# Plot of numerical and exact solutions at t=1
 fig, ax = plt.subplots()
 ax.plot(x, U[:,-1], label='Numerical Solution')
 ax.plot(xx, exact[:,-1], label='Analytical Solution')
